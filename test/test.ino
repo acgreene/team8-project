@@ -33,16 +33,20 @@
 
 #include <SparkFun_GridEYE_Arduino_Library.h>
 #include <Wire.h>
+#include <iostream>
+#include <numeric>
+#include <cmath>
 
 // Use these values (in degrees C) to adjust the contrast
 #define HOT 40
 #define COLD 20
-
 // This table can be of type int because we map the pixel 
 // temperature to 0-3. Temperatures are reported by the 
 // library as floats
 double pixelTable[64];
-double background=0;
+double frames[100][64];
+double mean[64] = {};
+double std[64] = {};
 
 GridEYE grideye;
 
@@ -50,24 +54,36 @@ void updatePixelTable() {
   // loop through all 64 pixels on the device and map each float value to a number
   // between 0 and 3 using the HOT and COLD values we set at the top of the sketch
   for(unsigned char i = 0; i < 64; i++){
-//    pixelTable[i] = map(grideye.getPixelTemperature(i), COLD, HOT, 0, 3);
+    // pixelTable[i] = map(grideye.getPixelTemperature(i), COLD, HOT, 0, 3);
       pixelTable[i] = grideye.getPixelTemperatureFahrenheit(i);
   }
 }
 
 //function finds the moving avg of pixelTable for a period of i and returns it
-double movingAvg(double i) {
-  double movingAvg=0;
-  double sum=0;
-  for(double j=0; j<i; j++) {
-    sum=0;
-    for(double k=0; k<pixelTable.size(); k++) {
-      pixelTable[k] = grideye.getPixelTemperatureFahrenheit(k);
+void stats(double num_frames) {
+  for(int j=0; j<num_frames; j++) {
+    //update pixelTable for every frame in pd i
+    updatePixelTable();
+    //find sum of pixels in pixelTable() using std::accumulate
+    // sum = std::accumulate(std::begin(pixelTable), std::end(pixelTable), 0, std::plus<double>());
+    // movingAvg.push_back(sum/64);
+    for(int k = 0; k < 64; ++k){
+      frames[j][k] = pixelTable[k]; //copies the kth val in pixelTable
     }
-    movingAvg += sum/64;
   }
-  movingAvg = movingAvg/i;
-  return movingAvg;
+  for(int j = 0; j < 64; ++j){
+    for(int k = 0; k < 100; ++k){
+        mean[j] += frames[k][j] / 100.0;
+    }
+  }
+
+  for(int j = 0; j < 64; ++j){
+    for(int k = 0; k < 100; ++k){
+        std[j] += pow((frames[k][j] - mean[j]),2) / 100.0;
+    }
+    std[j] = sqrt(std[j]);
+  }
+  return;
 }
 
 void setup() {
@@ -78,17 +94,44 @@ void setup() {
   grideye.begin();
   // Pour a bowl of serial
   Serial.begin(115200);
-
+  // Serial.println("Background temp = \n");
+  stats(100);
+  
+  Serial.println();
+  Serial.println("Mean Image: ");
+  for(unsigned char i = 0; i < 64; i++){
+    Serial.print(mean[i]);
+    Serial.print(" ");
+    if((i+1)%8==0){
+      Serial.println();
+    }
+  }
+  Serial.println();
+  Serial.println("Standard Deviation Image: ");
+  for(unsigned char i = 0; i < 64; i++){
+    Serial.print(std[i]);
+    Serial.print(" ");
+    if((i+1)%8==0){
+      Serial.println();
+    }
+  }
 }
 
 void loop() {
   updatePixelTable(); //initialize pixel temperatures
-  background = movingAvg(250) //find avg temp for first 250 frames as background
+  //we want to print only when the ir sensor detects temperatures outside our noise range of background
+  
+}
 
 
-  // loop through the table of mapped values and print a character corresponding to each
-  // pixel's temperature. Add a space between each. Start a new line every 8 in order to 
-  // create an 8x8 grid
+/* 
+Function: Loop through the table of mapped values and print a character corresponding to each
+pixel's temperature in an 8x8 grid.
+Input: Rate of print in ms. 
+Output: An 8x8 table of pixel values in the serial monitor. 
+*/ 
+void printPixelTable(int rate) {
+  
   for(unsigned char i = 0; i < 64; i++){
     Serial.print(pixelTable[i]);
     Serial.print(" ");
@@ -96,15 +139,39 @@ void loop() {
       Serial.println();
     }
   }
-
+  
   // in between updates, throw a few linefeeds to visually separate the grids. If you're using
   // a serial terminal outside the Arduino IDE, you can replace these linefeeds with a clearscreen
   // command
   Serial.println();
   Serial.println();
 
+  // print table every 1 second
+  delay(rate);
+}
 
-  // toss in a delay because we don't need to run all out
-  delay(1000);
+/*
+Function: Finds if someone is in the frame of the camera. 
+Input: an integer indicating the threshold temperature for human detection. 
+Output: a boolean value, true if someone is in frame, false if not. 
+*/
+bool inFrame(int threshold) {
+  for(int k = 0; k < 64; ++k){
+      
+    }
+}
+
+/*
+Function: Finds the number of people in the frame of the camera. 
+Input: n/a
+Output: a boolean value, true if someone is in frame, false if not. 
+*/
+int peopleInFrame() {
 
 }
+
+//represents a coordinate position in the camera frame. 
+struct pos {
+  int x;
+  int y;
+};
