@@ -46,7 +46,7 @@
 double pixelTable[64];
 double frames[100][64];
 double mean[64] = {};
-double std[64] = {};
+double stdv[64] = {};
 
 GridEYE grideye;
 
@@ -79,9 +79,9 @@ void stats(double num_frames) {
 
   for(int j = 0; j < 64; ++j){
     for(int k = 0; k < 100; ++k){
-        std[j] += pow((frames[k][j] - mean[j]),2) / 100.0;
+        stdv[j] += pow((frames[k][j] - mean[j]),2) / 100.0;
     }
-    std[j] = sqrt(std[j]);
+    stdv[j] = sqrt(stdv[j]);
   }
   return;
 }
@@ -110,7 +110,7 @@ void setup() {
   Serial.println("Standard Deviation: ");
   double tot_std = 0;
   for(unsigned char i = 0; i < 64; i++){
-    tot_std += std[i];
+    tot_std += stdv[i];
   }
   tot_std /= 64;
   Serial.println(tot_std);
