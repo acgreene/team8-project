@@ -107,14 +107,13 @@ void setup() {
     }
   }
   Serial.println();
-  Serial.println("Standard Deviation Image: ");
+  Serial.println("Standard Deviation: ");
+  double tot_std = 0;
   for(unsigned char i = 0; i < 64; i++){
-    Serial.print(std[i]);
-    Serial.print(" ");
-    if((i+1)%8==0){
-      Serial.println();
-    }
+    tot_std += std[i];
   }
+  tot_std /= 64;
+  Serial.println(tot_std);
 }
 
 void loop() {
