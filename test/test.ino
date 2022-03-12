@@ -61,7 +61,9 @@ double movingAvg(double i) {
   double sum=0;
   for(double j=0; j<i; j++) {
     sum=0;
-    updatePixelTable();
+    for(double k=0; k<pixelTable.size(); k++) {
+      pixelTable[k] = grideye.getPixelTemperatureFahrenheit(k);
+    }
     movingAvg += sum/64;
   }
   movingAvg = movingAvg/i;
