@@ -42,8 +42,31 @@
 // temperature to 0-3. Temperatures are reported by the 
 // library as floats
 double pixelTable[64];
+double background=0;
 
 GridEYE grideye;
+
+void updatePixelTable() {
+  // loop through all 64 pixels on the device and map each float value to a number
+  // between 0 and 3 using the HOT and COLD values we set at the top of the sketch
+  for(unsigned char i = 0; i < 64; i++){
+//    pixelTable[i] = map(grideye.getPixelTemperature(i), COLD, HOT, 0, 3);
+      pixelTable[i] = grideye.getPixelTemperatureFahrenheit(i);
+  }
+}
+
+//function finds the moving avg of pixelTable for a period of i and returns it
+double movingAvg(double i) {
+  double movingAvg=0;
+  double sum=0;
+  for(double j=0; j<i; j++) {
+    sum=0;
+    updatePixelTable();
+    movingAvg += sum/64;
+  }
+  movingAvg = movingAvg/i;
+  return movingAvg;
+}
 
 void setup() {
 
@@ -57,13 +80,8 @@ void setup() {
 }
 
 void loop() {
-
-  // loop through all 64 pixels on the device and map each float value to a number
-  // between 0 and 3 using the HOT and COLD values we set at the top of the sketch
-  for(unsigned char i = 0; i < 64; i++){
-//    pixelTable[i] = map(grideye.getPixelTemperature(i), COLD, HOT, 0, 3);
-      pixelTable[i] = grideye.getPixelTemperatureFahrenheit(i);
-  }
+  updatePixelTable(); //initialize pixel temperatures
+  background = movingAvg(250) //find avg temp for first 250 frames as background
 
 
   // loop through the table of mapped values and print a character corresponding to each
