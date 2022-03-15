@@ -48,6 +48,7 @@ double pixelTable[64];
 double frames[NUM_FRAMES][64];
 double mean[64] = {};
 double stdv[64] = {};
+double backgroundAvg;
 
 GridEYE grideye;
 
@@ -103,10 +104,38 @@ void setup() {
   // Pour a bowl of serial
   Serial.begin(115200);
   // Serial.println("Background temp = \n");
-
+  stats(100);
+  
+  Serial.println();
+  Serial.println("Mean Image: ");
+  for(unsigned char i = 0; i < 64; i++){
+    Serial.print(mean[i]);
+    Serial.print(" ");
+    if((i+1)%8==0){
+      Serial.println();
+    }
+  }
+  backgroundAvg = std::accumulate(std::begin(mean), std::end(mean), 0, std::plus<double>())/64.0;
+  Serial.println();
+  Serial.println("Standard Deviation: ");
+  double tot_std = 0;
+  for(unsigned char i = 0; i < 64; i++){
+    tot_std += stdv[i];
+  }
+  tot_std /= 64;
+  Serial.println(tot_std);
 }
 
 void loop() {
+  updatePixelTable(); //initialize pixel temperatures
+  if(inFrame(backgroundAvg)) {
+    Serial.println("--------------");
+    Serial.println("HUMAN DETECTED");
+    Serial.println("--------------");
+  }
+  printPixelTable(500); //print table every 0.5sec
+  
+  /* Framerate Test Calculation Code
   double avg_fps = 0;
   for(int i = 0; i < 100; ++i){
     double init = grideye.getPixelTemperatureFahrenheit(0);
@@ -121,39 +150,7 @@ void loop() {
     avg_fps += fps / 100.0;
   }
   Serial.println(avg_fps);
-  
-//  updatePixelTable();
-//  if(inFrame(70, 5)){
-//    Serial.println("DETECTED PERSON");
-//  }
-//  Serial.println();
-//  printPixelTable(1000);
-//  stats(NUM_FRAMES);
-//  
-//  Serial.println();
-//  Serial.println("Mean Image: ");
-//  double avg = 0;
-//  for(int j = 0; j < 64; ++j){
-//    avg += pixelTable[j];
-//  }
-//  avg /= 64.0;
-//  Serial.println(avg);
-
-//  for(unsigned char i = 0; i < 64; i++){
-//    Serial.print(mean[i]);
-//    Serial.print(" ");
-//    if((i+1)%8==0){
-//      Serial.println();
-//    }
-//  }
-//  Serial.println();
-//  Serial.println("Standard Deviation: ");
-//  double tot_std = 0;
-//  for(unsigned char i = 0; i < 64; i++){
-//    tot_std += stdv[i];
-//  }
-//  tot_std /= 64;
-//  Serial.println(tot_std);
+  */
 }
 
 
@@ -164,29 +161,27 @@ Input: Rate of print in ms.
 Output: An 8x8 table of pixel values in the serial monitor. 
 */ 
 void printPixelTable(int rate) {
-  
   for(unsigned char i = 0; i < 64; i++){
     Serial.print(pixelTable[i]);
     Serial.print(" ");
     if((i+1)%8==0){
+      Serial.print(" ]")
       Serial.println();
+      Seial.print("[ ")
     }
   }
-  
   // in between updates, throw a few linefeeds to visually separate the grids. If you're using
   // a serial terminal outside the Arduino IDE, you can replace these linefeeds with a clearscreen
   // command
   Serial.println();
   Serial.println();
 
-  // print table every 1 second
+  // print table every 'rate' ms
   delay(rate);
 }
 
 /*
-Function: Finds if someone is in the frame of the camera. 
-Input: an integer indicating the threshold temperature for human detection. 
-Output: a boolean value, true if someone is in frame, false if not. 
+Overloaded function based on a pixel threshold for determining if someone is in frame
 */
 bool inFrame(int temp_threshold, int num_pix_thresh) {
   int num_hot = 0;
@@ -200,6 +195,19 @@ bool inFrame(int temp_threshold, int num_pix_thresh) {
     }
     return false;
 }
+/*
+Function: Finds if someone is in the frame of the camera. 
+Input: a double indicating the threshold temperature for human detection. 
+Output: a boolean value, true if someone is in frame, false if not. 
+*/
+bool inFrame(double threshold) {
+  double i = 0;
+  while(i < 64 && pixelTable[i] <= threshold) {
+    i++;
+  }
+  if(i < 64) return true;
+  else return false;
+}
 
 /*
 Function: Finds the number of people in the frame of the camera. 
@@ -207,7 +215,7 @@ Input: n/a
 Output: a boolean value, true if someone is in frame, false if not. 
 */
 int peopleInFrame() {
-
+  //lmaooo gl making this func
 }
 
 //represents a coordinate position in the camera frame. 
