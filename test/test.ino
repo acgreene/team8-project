@@ -40,11 +40,12 @@
 // Use these values (in degrees C) to adjust the contrast
 #define HOT 40
 #define COLD 20
+#define NUM_FRAMES 200
 // This table can be of type int because we map the pixel 
 // temperature to 0-3. Temperatures are reported by the 
 // library as floats
 double pixelTable[64];
-double frames[100][64];
+double frames[NUM_FRAMES][64];
 double mean[64] = {};
 double stdv[64] = {};
 
@@ -61,6 +62,12 @@ void updatePixelTable() {
 
 //function finds the moving avg of pixelTable for a period of i and returns it
 void stats(double num_frames) {
+
+  for(int j = 0; j < 64; ++j){
+    mean[j] = 0;
+    stdv[j] = 0;
+  }
+  
   for(int j=0; j<num_frames; j++) {
     //update pixelTable for every frame in pd i
     updatePixelTable();
@@ -92,34 +99,61 @@ void setup() {
   Wire.begin();
   // Library assumes "Wire" for I2C but you can pass something else with begin() if you like
   grideye.begin();
+  grideye.setFramerate10FPS();
   // Pour a bowl of serial
   Serial.begin(115200);
   // Serial.println("Background temp = \n");
-  stats(100);
-  
-  Serial.println();
-  Serial.println("Mean Image: ");
-  for(unsigned char i = 0; i < 64; i++){
-    Serial.print(mean[i]);
-    Serial.print(" ");
-    if((i+1)%8==0){
-      Serial.println();
-    }
-  }
-  Serial.println();
-  Serial.println("Standard Deviation: ");
-  double tot_std = 0;
-  for(unsigned char i = 0; i < 64; i++){
-    tot_std += stdv[i];
-  }
-  tot_std /= 64;
-  Serial.println(tot_std);
+
 }
 
 void loop() {
-  updatePixelTable(); //initialize pixel temperatures
-  //we want to print only when the ir sensor detects temperatures outside our noise range of background
+  double avg_fps = 0;
+  for(int i = 0; i < 100; ++i){
+    double init = grideye.getPixelTemperatureFahrenheit(0);
+    int start = millis();
+    bool cont = true;
+    while(cont){
+      updatePixelTable();
+      if(pixelTable[0] != init) cont = false;
+    }
+    int endt = millis();
+    double fps = 1000.0 / (endt - start);
+    avg_fps += fps / 100.0;
+  }
+  Serial.println(avg_fps);
   
+//  updatePixelTable();
+//  if(inFrame(70, 5)){
+//    Serial.println("DETECTED PERSON");
+//  }
+//  Serial.println();
+//  printPixelTable(1000);
+//  stats(NUM_FRAMES);
+//  
+//  Serial.println();
+//  Serial.println("Mean Image: ");
+//  double avg = 0;
+//  for(int j = 0; j < 64; ++j){
+//    avg += pixelTable[j];
+//  }
+//  avg /= 64.0;
+//  Serial.println(avg);
+
+//  for(unsigned char i = 0; i < 64; i++){
+//    Serial.print(mean[i]);
+//    Serial.print(" ");
+//    if((i+1)%8==0){
+//      Serial.println();
+//    }
+//  }
+//  Serial.println();
+//  Serial.println("Standard Deviation: ");
+//  double tot_std = 0;
+//  for(unsigned char i = 0; i < 64; i++){
+//    tot_std += stdv[i];
+//  }
+//  tot_std /= 64;
+//  Serial.println(tot_std);
 }
 
 
@@ -154,10 +188,17 @@ Function: Finds if someone is in the frame of the camera.
 Input: an integer indicating the threshold temperature for human detection. 
 Output: a boolean value, true if someone is in frame, false if not. 
 */
-bool inFrame(int threshold) {
+bool inFrame(int temp_threshold, int num_pix_thresh) {
+  int num_hot = 0;
   for(int k = 0; k < 64; ++k){
-      
+      if(pixelTable[k] > temp_threshold){
+        ++num_hot;
+      }
+      if(num_hot == num_pix_thresh){
+        return true;
+      }
     }
+    return false;
 }
 
 /*
