@@ -167,7 +167,7 @@ void printPixelTable(int rate) {
     if((i+1)%8==0){
       Serial.print(" ]")
       Serial.println();
-      Seial.print("[ ")
+      Serial.print("[ ")
     }
   }
   // in between updates, throw a few linefeeds to visually separate the grids. If you're using
