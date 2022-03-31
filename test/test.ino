@@ -128,11 +128,11 @@ void setup() {
 
 void loop() {
   updatePixelTable(); //initialize pixel temperatures
-  if(inFrame(backgroundAvg)) {
-    Serial.println("--------------");
-    Serial.println("HUMAN DETECTED");
-    Serial.println("--------------");
-  }
+//  if(inFrame(backgroundAvg)) {
+//    Serial.println("--------------");
+//    Serial.println("HUMAN DETECTED");
+//    Serial.println("--------------");
+//  }
   printPixelTable(500); //print table every 0.5sec
   
   /* Framerate Test Calculation Code
@@ -165,16 +165,16 @@ void printPixelTable(int rate) {
     Serial.print(pixelTable[i]);
     Serial.print(" ");
     if((i+1)%8==0){
-      Serial.print(" ]")
+//      Serial.print(" ]");
       Serial.println();
-      Serial.print("[ ")
+//      Serial.print("[ ")
     }
   }
   // in between updates, throw a few linefeeds to visually separate the grids. If you're using
   // a serial terminal outside the Arduino IDE, you can replace these linefeeds with a clearscreen
   // command
   Serial.println();
-  Serial.println();
+//  Serial.println();
 
   // print table every 'rate' ms
   delay(rate);
@@ -201,7 +201,7 @@ Input: a double indicating the threshold temperature for human detection.
 Output: a boolean value, true if someone is in frame, false if not. 
 */
 bool inFrame(double threshold) {
-  double i = 0;
+  int i = 0;
   while(i < 64 && pixelTable[i] <= threshold) {
     i++;
   }

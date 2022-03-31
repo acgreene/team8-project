@@ -8,28 +8,23 @@
 #include "Person.h"
 #include "Detector.h"
 
-GridEYE grideye;
-
 void setup() {
 
   // Start your preferred I2C object 
   Wire.begin();
-
-  // Initialize GridEYE object
-  grideye.begin();
-  grideye.setFramerate10FPS();
   
-  // Pour a bowl of serial
+  // Start Serial 
   Serial.begin(115200);
 
   // Construct Detector Object
-  Detector d;
-
-  // Initialize Background
-  d.init(200);
-  
+  Detector d = Detector(200);
 }
 
 void loop() {
+
+  // read in new frame
+  // set past frame to curr frame
+
+  // look for person
 
 }
