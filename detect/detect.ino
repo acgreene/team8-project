@@ -14,7 +14,7 @@ void setup() {
   Wire.begin();
   
   // Start Serial 
-  Serial.begin(115200);
+  Serial.begin(115200)
 
   // Construct Detector Object
   Detector d = Detector(200);
