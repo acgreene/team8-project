@@ -1,18 +1,21 @@
-#ifndef FRAME_H
-#define FRAME_H
+#ifndef Frame_h
+#define Frame_h
 
 #include <SparkFun_GridEYE_Arduino_Library.h>
-#include <iostream>
-#include "helpers.cpp"
+#include "Helpers.h"
+#include "Person.h"
 
-struct Frame {
-    
-    void update_pixels(const GridEYE &g);
-    
-    void print(unsigned int rate);
-    
-    double table[8][8];
+
+class Frame{
+public:
+    void update_pixels(GridEYE &g);
+
+    bool saw_person = false;
     double mean_temp;
+    // Going to need array of people
+    Person p;
+    unsigned int table[8][8];
+    
 };
 
-#endif // FRAME_H
+#endif /* Frame_h */

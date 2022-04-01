@@ -1,31 +1,36 @@
-#ifndef FRAME_H
-#define FRAME_H
+#ifndef Detector_H
+#define Detector_H
 
 #include "Frame.h"
 #include "Person.h"
-#include "helpers.cpp"
+#include "Helpers.h"
+#include <SparkFun_GridEYE_Arduino_Library.h>
 
-struct Detector{
-  
-    void init_background(unsigned int num_frames);
+
+
+class Detector{
+public:
+    void init(unsigned int num_frames);
+
+    void update_frame();
     
     bool person_detected();
+
+    void find_person(bool plotter);
     
     void update_velocities();
     
-    Detector(unsigned int num_frames);
+    Detector();
+    
+    ~Detector();
     
     unsigned int count;
     double background_temp;
     double noise;
-    // Going to need array of detected people, probably dynamically allocated
-    Person p;
-    Grideye g;
-    Frame curr_frame;
-    Frame past_frame;
+    GridEYE g;
+    Frame *curr_frame;
+    Frame *past_frame;
 };
 
 
-
-
-#endif // FRAME_H
+#endif
