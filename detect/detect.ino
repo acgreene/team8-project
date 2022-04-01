@@ -71,6 +71,14 @@ void loop() {
   }
   else{
     // Check if someone was in last frame, meaning that they left the frame
+    if(past_frame.saw_person){
+      if(past_frame.p->from_inside and !past_frame.p->moving_inside){
+        --count;
+      }
+      else if(!past_frame.p->from_inside and past_frame.p->moving_inside){
+        ++count;
+      }
+    }
   }
 
   // Give Time For Sensor To Supply new Frame
