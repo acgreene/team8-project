@@ -92,7 +92,7 @@ void Detector::find_person(bool plotter){
   }
   d.curr_frame->p.xpos = x_max;
   d.curr_frame->p.ypos = y_max;
-  d.curr_frame->p.from_inside = x_max < 4; //VERIFY MY AXES ARE RIGHT
+  //VERIFY MY AXES ARE RIGHT
   
 }
 
