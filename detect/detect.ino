@@ -45,6 +45,7 @@ void setup() {
 // TODO: 
 // Enter a deep sleep when nobody is in the frame and set up Interrupt to wake the device when someone enters
 // Will need to reconnect Wifi and BT each time we wake
+// https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html
 // Hold Overall count in Server ESP, Client ESP just sends +1 or -1 each time
 
 
