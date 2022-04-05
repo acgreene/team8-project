@@ -5,12 +5,15 @@
 #include <Wire.h>
 #include <SparkFun_GridEYE_Arduino_Library.h>
 
-void Detector::init(unsigned int num_frames){
+int Detector::init(unsigned int num_frames){
 
   unsigned int frames[num_frames][8][8];
   
   for(int i = 0; i < num_frames; ++i){
-     fill(frames[i], g);
+     double m = fill(frames[i], g);
+     if(m > 80000){
+      return i;
+     }
      delay(100);
   }
 
@@ -35,21 +38,20 @@ void Detector::init(unsigned int num_frames){
   noise = sqrt(noise / double(num_frames*64));
 
   curr_frame = new Frame();
-  past_frame = new Frame();
-
-  
-  past_frame->update_pixels(g);
-  delay(100);
   curr_frame->update_pixels(g);
+  return 0;
 }
     
 
   // Read in current frame, Assign old frame to curr frame
 void Detector::update_frame(){
-  past_frame->update_pixels(g);
-  Frame *temp = past_frame;
-  past_frame = curr_frame;
-  curr_frame = temp;
+  saw_past_person = curr_frame->saw_person;
+  if(saw_past_person){
+    past_person = curr_frame->p;
+  }
+  curr_frame->update_pixels(g);
+  curr_frame->saw_person = false;
+  curr_frame->p = Person();
 }
 
 
@@ -89,9 +91,10 @@ void Detector::find_person(bool plotter){
       }
       Serial.println();
     }
+    Serial.println();
   }
-  d.curr_frame->p.xpos = x_max;
-  d.curr_frame->p.ypos = y_max;
+  curr_frame->p.xpos = x_max;
+  curr_frame->p.ypos = y_max;
   //VERIFY MY AXES ARE RIGHT
   
 }
@@ -110,11 +113,11 @@ Detector::Detector(){
   count = 0;
   background_temp = 0;
   noise = 0;  
+  saw_past_person = false;
 }
   
 Detector::~Detector(){
   delete curr_frame;
-  delete past_frame;
 }
 
     

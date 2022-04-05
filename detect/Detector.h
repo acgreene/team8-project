@@ -10,7 +10,7 @@
 
 class Detector{
 public:
-    void init(unsigned int num_frames);
+    int init(unsigned int num_frames);
 
     void update_frame();
     
@@ -23,13 +23,14 @@ public:
     Detector();
     
     ~Detector();
-    
+
+    bool saw_past_person;
     unsigned int count;
     double background_temp;
     double noise;
+    Person past_person;
     GridEYE g;
     Frame *curr_frame;
-    Frame *past_frame;
 };
 
 

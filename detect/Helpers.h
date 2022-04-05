@@ -5,5 +5,6 @@
 
 double fill(unsigned int target[][8], GridEYE &g);
 
+int sgn(int x);
 
 #endif

@@ -11,3 +11,13 @@ double fill(unsigned target[][8], GridEYE &g){
     }
     return mean / 64.0;
 }
+
+int sgn(int x){
+  if(x < 0){
+    return -1;
+  }
+  else if(x > 0){
+    return 1;
+  }
+  return 0;
+}
