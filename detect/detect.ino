@@ -21,19 +21,11 @@ void setup() {
   Serial.begin(9600);
 
   // Give time to set up sensor and get out of frame for init step
-  delay(5000);
+  delay(3000);
 
   // Initialize Background
   Serial.println("About To Initialize");
-  int err = d.init(100);
-
-  // Make sure values are resonable, sometimes they are crazy large, probably due to some uninitialized memory or weird comms
-  while(err != -1){
-    Serial.println("Init Failed, Trying Again...");
-    Serial.print("Failed on Frame: ");
-    Serial.println(err);
-    err = d.init(100);
-  }
+  d.init(100);
   
   // Print Background Info
   Serial.print("Background Temp: ");
@@ -51,7 +43,6 @@ void setup() {
 }
 
 // TODO: 
-// Change d.person_detected to use otsu bin
 // Enter a deep sleep when nobody is in the frame and set up Interrupt to wake the device when someone enters
 // Will need to reconnect Wifi or BT each time we wake
 // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html
@@ -67,7 +58,7 @@ void loop() {
   d.update_and_process_frame();
   
   // check for person in frame
-  if(d.person_detected_mean()){
+  if(d.person_detected_mean() or d.person_detected_otsu()){
     
     // Set Saw Person Flag to True for This Frame
     d.curr_frame.saw_person = true;
@@ -106,7 +97,7 @@ void loop() {
       } 
     }
  }
-  // Nobody Seen in Current Frame
+//  // Nobody Seen in Current Frame
   else{
     // Check if someone was in last frame, meaning that they left the frame
     if(d.saw_past_person){

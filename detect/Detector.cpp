@@ -5,40 +5,40 @@
 #include <Wire.h>
 #include <SparkFun_GridEYE_Arduino_Library.h>
 
-int Detector::init(unsigned int num_frames){
+void Detector::init(unsigned int num_frames){
 
   unsigned int frames[num_frames][8][8];
   
   for(int i = 0; i < num_frames; ++i){
      double m = fill(frames[i], g);
-     if(m > 80000){
-      return i;
-     }
      delay(100);
   }
 
+  double num_good_pix = 0;
+  
   for(int i = 0; i < num_frames; ++i){
      for(int j = 0; j < 8; ++j){
         for(int k = 0; k < 8; ++k){
-          background_temp += frames[i][j][k];
+          if(frames[i][j][k] < 10000){
+            background_temp += frames[i][j][k];
+            ++num_good_pix;
+          }
         }
      }
   }
 
-  background_temp /= double(num_frames*64);
+  background_temp /= num_good_pix;
 
    for(int i = 0; i < num_frames; ++i){
      for(int j = 0; j < 8; ++j){
         for(int k = 0; k < 8; ++k){
-          noise += pow(frames[i][j][k] - background_temp, 2);
+          if(frames[i][j][k] < 10000){
+            noise += pow(frames[i][j][k] - background_temp, 2);
+          }
         }
      }
   }
-
-  noise = sqrt(noise / double(num_frames*64));
-
-//  curr_frame.update_pixels(g);
-  return -1;
+  noise = sqrt(noise / num_good_pix);
 }
     
 
@@ -64,6 +64,9 @@ void Detector::update_and_process_frame(){
   for(byte row = 0; row < 8; ++row){
       for(byte col = 0; col < 8; ++col){
           unsigned int pix_temp = (unsigned int) 100*g.getPixelTemperatureFahrenheit(row*8 + col);
+          if(pix_temp > 10000){
+            continue;
+          }
           curr_frame.table[row][col] = pix_temp;
 
           if(pix_temp > max_temp){
@@ -72,7 +75,7 @@ void Detector::update_and_process_frame(){
             max_temp = pix_temp;
           }
           
-          if(pix_temp > background_temp + noise){
+          if(pix_temp > background_temp + 2*noise){
             sum_hot += pix_temp;
             ++num_hot;
           }
@@ -83,8 +86,8 @@ void Detector::update_and_process_frame(){
       }
    }
 
-   curr_frame.diff_class_temp = (sum_hot / num_hot) - (sum_cold / num_cold);
-   curr_frame.mean_temp = (sum_hot + sum_cold) / 64.0;
+   curr_frame.diff_class_temp = (sum_hot / (num_hot + .1)) - (sum_cold / (num_cold + .1));
+   curr_frame.mean_temp = (sum_hot + sum_cold) / (num_cold + num_hot);
 
    curr_frame.p.xpos = 7 - x_max; // reverse for plot
    curr_frame.p.ypos = y_max;

@@ -10,7 +10,7 @@
 
 class Detector{
 public:
-    int init(unsigned int num_frames);
+    void init(unsigned int num_frames);
 
     void update_and_process_frame();
     
