@@ -11,21 +11,19 @@
 
 
 
-double fill(unsigned target[][8], GridEYE &g){
+double fill(unsigned int target[][8], GridEYE &g){
     double mean = 0;
+    double num_good_pix = 0;
     for(byte row = 0; row < 8; ++row){
         for(byte col = 0; col < 8; ++col){
-            target[row][col] = 100*g.getPixelTemperatureFahrenheit(row*8 + col);
-            if(target[row][col] > 80000){
-              Serial.print("X: ");
-              Serial.print(col);
-              Serial.print(" Y: ");
-              Serial.println(row);
+            target[row][col] = (unsigned int) 100*g.getPixelTemperatureFahrenheit(row*8 + col);
+            if(target[row][col] < 10000){
+              mean += target[row][col];
+              ++num_good_pix;
             }
-            mean += target[row][col];
         }
     }
-    mean /= 64.0;
+    return mean / num_good_pix;
 }
 
 
@@ -43,65 +41,89 @@ void setup() {
   // Initialize Background
   Serial.println("About To Initialize");
 
-  unsigned int num_frames = 30;
-  float frames[num_frames][8][8];
-  double frames_uint[num_frames][8][8];
-
-  for(int i = 0; i < num_frames; ++i){
-    for(byte row = 0; row < 8; ++row){
-        for(byte col = 0; col < 8; ++col){
-          frames[i][row][col] = d.g.getPixelTemperatureFahrenheit(row*8 + col);
-          frames_uint[i][row][col] = (double) frames[i][row][col];
-          Serial.print(frames[i][row][col]);
-          Serial.print(" ");
-          Serial.print(frames_uint[i][row][col]);
-          Serial.print(" ");
-        }
-        Serial.println();
-    }
-    Serial.println();
-  }
+//  unsigned int num_frames = 30;
+//  float frames[num_frames][8][8];
+//  double frames_uint[num_frames][8][8];
+//
+//  for(int i = 0; i < num_frames; ++i){s
+//    for(byte row = 0; row < 8; ++row){
+//        for(byte col = 0; col < 8; ++col){
+//          frames[i][row][col] = d.g.getPixelTemperatureFahrenheit(row*8 + col);
+//          frames_uint[i][row][col] = (double) frames[i][row][col];
+//          Serial.print(frames[i][row][col]);
+//          Serial.print(" ");
+//          Serial.print(frames_uint[i][row][col]);
+//          Serial.print(" ");
+//        }
+//        Serial.println();
+//    }
+//    Serial.println();
+//  }
   
   
   
 
-  for(int i = 0; i < num_frames; ++i){
-     for(int j = 0; j < 8; ++j){
-        for(int k = 0; k < 8; ++k){
-          d.background_temp += frames[i][j][k];
-        }
-     }
-  }
-
-  d.background_temp /= double(num_frames*64);
-
-   for(int i = 0; i < num_frames; ++i){
-     for(int j = 0; j < 8; ++j){
-        for(int k = 0; k < 8; ++k){
-          d.noise += pow(frames[i][j][k] - d.background_temp, 2);
-        }
-     }
-  }
-
-  d.noise = sqrt(d.noise / double(num_frames*64));
-
-  d.curr_frame.update_pixels(d.g);
-
-  
-  // Print Background Info
-  Serial.print("Background Temp: ");
-  Serial.println(d.background_temp);
-  Serial.print("Noise: ");
-  Serial.println(d.noise);
-  Serial.print("Detection Thresh: ");
-  Serial.println(d.background_temp + d.noise);
-
-  // Delay for Update Frame
-  delay(1000);
+//  for(int i = 0; i < num_frames; ++i){
+//     for(int j = 0; j < 8; ++j){
+//        for(int k = 0; k < 8; ++k){
+//          d.background_temp += frames[i][j][k];
+//        }
+//     }
+//  }
+//
+//  d.background_temp /= double(num_frames*64);
+//
+//   for(int i = 0; i < num_frames; ++i){
+//     for(int j = 0; j < 8; ++j){
+//        for(int k = 0; k < 8; ++k){
+//          d.noise += pow(frames[i][j][k] - d.background_temp, 2);
+//        }
+//     }
+//  }
+//
+//  d.noise = sqrt(d.noise / double(num_frames*64));
+//
+//  d.curr_frame.update_pixels(d.g);
+//
+//  
+//  // Print Background Info
+//  Serial.print("Background Temp: ");
+//  Serial.println(d.background_temp);
+//  Serial.print("Noise: ");
+//  Serial.println(d.noise);
+//  Serial.print("Detection Thresh: ");
+//  Serial.println(d.background_temp + d.noise);
+//
+//  // Delay for Update Frame
+//  delay(1000);
 }
 
 
 void loop() {
+
+  unsigned int num_frames = 30;
+  unsigned int frames[num_frames][8][8];
+
+  for(int i = 0; i < num_frames; ++i){
+    for(int i = 0; i < num_frames; ++i){
+      double m = fill(frames[i], d.g);
+      Serial.println(m);
+      delay(100);
+    }
+    
+//    for(byte row = 0; row < 8; ++row){
+//        for(byte col = 0; col < 8; ++col){
+//          frames[i][row][col] = d.g.getPixelTemperatureFahrenheit(row*8 + col);
+//          frames_uint[i][row][col] = (double) frames[i][row][col];
+//          Serial.print(frames[i][row][col]);
+//          Serial.print(" ");
+//          Serial.print(frames_uint[i][row][col]);
+//          Serial.print(" ");
+//        }
+//        Serial.println();
+//    }
+//    Serial.println();
+  }
 
   //update current and past frame
 //  d.update_frame();
