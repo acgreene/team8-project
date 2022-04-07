@@ -8,8 +8,12 @@
 #include "Person.h"
 #include "Detector.h"
 #include "Helpers.h"
+#include "Connect.h"
 
 Detector d;
+Connect client;
+
+
   
 void setup() {
   
@@ -38,6 +42,9 @@ void setup() {
   Serial.println(d.noise);
   Serial.print("Detection Thresh: ");
   Serial.println(d.background_temp + d.noise);
+
+  //Initialize Wifi Client
+  //client.init();
 
   // Delay for Update Frame
   delay(1000);
@@ -105,12 +112,12 @@ void loop() {
     if(d.saw_past_person){
       if(d.past_person.from_inside and d.past_person.xpos >= 4){
         Serial.println("LEAVING ROOM");
-        Serial.println("Occupancy Count Decreased by 1");
+        Serial.println("Local Occupancy Count Decreased by 1");
         --d.count;
       }
       else if(!d.past_person.from_inside and d.past_person.xpos < 4){
         Serial.println("ENTERING ROOM");
-        Serial.println("Occupancy Count Increased by 1");
+        Serial.println("Local Occupancy Count Increased by 1");
         ++d.count;
       }
       else{
