@@ -37,66 +37,83 @@ int Detector::init(unsigned int num_frames){
 
   noise = sqrt(noise / double(num_frames*64));
 
-  curr_frame = new Frame();
-  curr_frame->update_pixels(g);
-  return 0;
+//  curr_frame.update_pixels(g);
+  return -1;
 }
     
 
-  // Read in current frame, Assign old frame to curr frame
-void Detector::update_frame(){
-  saw_past_person = curr_frame->saw_person;
+// Read in current frame, Assign old frame to curr frame
+void Detector::update_and_process_frame(){
+
+  // Assign current frame to past frame
+  saw_past_person = curr_frame.saw_person;
   if(saw_past_person){
-    past_person = curr_frame->p;
+    past_person = curr_frame.p;
   }
-  curr_frame->update_pixels(g);
-  curr_frame->saw_person = false;
-  curr_frame->p = Person();
-}
+  curr_frame.saw_person = false;
 
+  double sum_hot = 0;
+  double num_hot = 0;
+  double sum_cold = 0;
+  double num_cold = 0;
 
-  // TODO: Implement Otsu Bin or Histogram method. Don't know if this is the best implementation since we need to compute if a person is detected, then find how many people, then find where they are in separate steps. What if we could just scan the image for people and just get all three things at once??
-bool Detector::person_detected(){
-    
-    // mean temp method
-    return curr_frame->mean_temp > background_temp + noise;
-    
-}
-
-void Detector::find_person(bool plotter){
-
+  byte x_max = 0;
+  byte y_max = 0;
   unsigned int max_temp = 0;
-  int x_max = 0;
-  int y_max = 0;
-  // figure out their position
+  
+  for(byte row = 0; row < 8; ++row){
+      for(byte col = 0; col < 8; ++col){
+          unsigned int pix_temp = (unsigned int) 100*g.getPixelTemperatureFahrenheit(row*8 + col);
+          curr_frame.table[row][col] = pix_temp;
+
+          if(pix_temp > max_temp){
+            x_max = col;
+            y_max = row;
+            max_temp = pix_temp;
+          }
+          
+          if(pix_temp > background_temp + noise){
+            sum_hot += pix_temp;
+            ++num_hot;
+          }
+          else{
+            sum_cold += pix_temp;
+            ++num_cold;
+          }
+      }
+   }
+
+   curr_frame.diff_class_temp = (sum_hot / num_hot) - (sum_cold / num_cold);
+   curr_frame.mean_temp = (sum_hot + sum_cold) / 64.0;
+
+   curr_frame.p.xpos = 7 - x_max; // reverse for plot
+   curr_frame.p.ypos = y_max;
+
+}
+
+
+bool Detector::person_detected_mean(){
+    // mean temp method
+    return curr_frame.mean_temp > background_temp + noise;
+}
+
+bool Detector::person_detected_otsu(){
+    return curr_frame.diff_class_temp > 3 * noise;
+}
+
+void Detector::plot(){
   for(int row = 0; row < 8; ++row){
     for(int col = 0; col < 8; ++col){
-      if(curr_frame->table[row][col] > max_temp){
-        max_temp = curr_frame->table[row][col];
-        x_max = 7 - col;
-        y_max = row;
+      if(row == curr_frame.p.ypos and col == curr_frame.p.xpos){
+        Serial.print(" O ");
       }
-    }
-  }
-
-  if(plotter){
-    for(int row = 0; row < 8; ++row){
-      for(int col = 0; col < 8; ++col){
-        if(row == int(y_max) and col == int(x_max)){
-          Serial.print(" O ");
-        }
-        else{
-          Serial.print(" . ");
-        }
+      else{
+        Serial.print(" . ");
       }
-      Serial.println();
     }
     Serial.println();
   }
-  curr_frame->p.xpos = x_max;
-  curr_frame->p.ypos = y_max;
-  //VERIFY MY AXES ARE RIGHT
-  
+  Serial.println();
 }
 
 
@@ -107,6 +124,7 @@ Detector::Detector(){
   // Initialize GridEYE object
   g = GridEYE();
   Wire.begin();
+  
   g.begin();
   g.setFramerate10FPS();
 
@@ -116,8 +134,8 @@ Detector::Detector(){
   saw_past_person = false;
 }
   
-Detector::~Detector(){
-  delete curr_frame;
-}
+//Detector::~Detector(){
+//  delete curr_frame;
+//}
 
     

@@ -10,16 +10,13 @@
 
 class Detector{
 public:
-    int init(unsigned int num_frames);
+//    int init(unsigned int num_frames);
 
-    void update_and_process_frame();
+//    void update_frame();
     
-    bool person_detected_mean();
+    bool person_detected();
 
-    bool person_detected_otsu();
-
-//    void find_person(bool plotter);
-    void plot();
+    void find_person(bool plotter);
     
     void update_velocities();
     

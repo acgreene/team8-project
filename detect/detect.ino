@@ -21,15 +21,14 @@ void setup() {
 
   // Initialize Background
   Serial.println("About To Initialize");
-  int f = d.init(100);
+  int err = d.init(100);
 
   // Make sure values are resonable, sometimes they are crazy large, probably due to some uninitialized memory or weird comms
-  while(d.background_temp > 8000){
+  while(err != -1){
     Serial.println("Init Failed, Trying Again...");
     Serial.print("Failed on Frame: ");
-    Serial.println(f);
-    d.init(100);
-    
+    Serial.println(err);
+    err = d.init(100);
   }
   
   // Print Background Info
@@ -45,7 +44,7 @@ void setup() {
 }
 
 // TODO: 
-// Fix Max Finder to not have to loop twice
+// Change d.person_detected to use otsu bin
 // Enter a deep sleep when nobody is in the frame and set up Interrupt to wake the device when someone enters
 // Will need to reconnect Wifi or BT each time we wake
 // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html
@@ -55,64 +54,44 @@ void setup() {
 void loop() {
 
   //update current and past frame
-  d.update_frame();
+  // Reads in new frame
+  // Gets mean temp and mean class diff
+  // Finds position of hottest pixel and updates x and y positions in curr_frame.p
+  d.update_and_process_frame();
   
   // check for person in frame
-  if(d.person_detected()){
+  if(d.person_detected_mean()){
     
     // Set Saw Person Flag to True for This Frame
-    d.curr_frame->saw_person = true;
+    d.curr_frame.saw_person = true;
 
-    // Find Person Location and Update Important Info
-    // Need to Verify Axis Orientation for each Sensor Setup
-    d.find_person(true);
-    
+    // Plots Table to Serial
+    d.plot();
     
     if(d.saw_past_person){
+      
         // figure out if this is a new person or same person
-        // maybe consider using velocity info
-        int x_dist = d.curr_frame->p.xpos - d.past_person.xpos;
-        // If blobs are close, we conclude it is the same person
+        int x_dist = d.curr_frame.p.xpos - d.past_person.xpos;
+        
+        // If blobs are close or along momentum vector, we conclude it is the same person
         if(abs(x_dist) <  4 or sgn(x_dist) == sgn(d.past_person.num_steps_right)){
+          
           // Keep track of where they entered
-          d.curr_frame->p.from_inside = d.past_person.from_inside;
-          d.curr_frame->p.num_steps_right = d.past_person.num_steps_right + sgn(x_dist);
+          d.curr_frame.p.from_inside = d.past_person.from_inside;
+          d.curr_frame.p.num_steps_right = d.past_person.num_steps_right + sgn(x_dist);
         }
         else{
           Serial.println("DOUBLE SWITCH");
-//          // update count since person left the frame
-//          if(d.past_frame->p.from_inside and !d.past_frame->p.xpos >= 4){
-//            Serial.println("PERSON 1 LEFT");
-//            --d.count;
-//          }
-//          else if(!d.past_frame->p.from_inside and d.past_frame->p.xpos < 4){
-//            Serial.println("PERSON 1 ENTERED");
-//            ++d.count;
-//          }
-//          else{
-//            Serial.println("PERSON 1 LEFT THE WAY THEY CAME");
-//          }
-//
-//          // Assign new Person
-//          d.curr_frame->p.from_inside = d.curr_frame->p.xpos < 4;
-////          d.curr_frame->p.moving_inside = !d.curr_frame->p.from_inside;
-//
-//          if(d.curr_frame->p.xpos < 4){
-//            Serial.println("PERSON 2 ENTERED FROM INSIDE");
-//          }
-//          else{
-//            Serial.println("PERSON 2 CAME FROM OUTISDE");
-//          }
-//          
+          Serial.println("NEED TO FIGURE THIS OUT");
         }
     }
     else{
       // Assign new person
       // Velocity found from which direction they entered
       Serial.println("NEW PERSON FOUND");
-      d.curr_frame->p.from_inside = d.curr_frame->p.xpos < 4;
-      d.curr_frame->p.num_steps_right = d.curr_frame->p.from_inside ? 1 : -1;
-      if(d.curr_frame->p.from_inside){
+      d.curr_frame.p.from_inside = d.curr_frame.p.xpos < 4;
+      d.curr_frame.p.num_steps_right = d.curr_frame.p.from_inside ? 1 : -1;
+      if(d.curr_frame.p.from_inside){
         Serial.println("CAME FROM INSIDE");
       }
       else{
@@ -126,14 +105,17 @@ void loop() {
     if(d.saw_past_person){
       if(d.past_person.from_inside and d.past_person.xpos >= 4){
         Serial.println("LEAVING ROOM");
+        Serial.println("Occupancy Count Decreased by 1");
         --d.count;
       }
       else if(!d.past_person.from_inside and d.past_person.xpos < 4){
         Serial.println("ENTERING ROOM");
+        Serial.println("Occupancy Count Increased by 1");
         ++d.count;
       }
       else{
         Serial.println("LEFT THE WAY THEY CAME");
+        Serial.println("No Change to Occupancy Count");
       }
     }
 

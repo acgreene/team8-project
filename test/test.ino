@@ -106,24 +106,24 @@ void setup() {
   // Serial.println("Background temp = \n");
   stats(100);
   
-  Serial.println();
-  Serial.println("Mean Image: ");
-  for(unsigned char i = 0; i < 64; i++){
-    Serial.print(mean[i]);
-    Serial.print(" ");
-    if((i+1)%8==0){
-      Serial.println();
-    }
-  }
-  backgroundAvg = std::accumulate(std::begin(mean), std::end(mean), 0, std::plus<double>())/64.0;
-  Serial.println();
-  Serial.println("Standard Deviation: ");
-  double tot_std = 0;
-  for(unsigned char i = 0; i < 64; i++){
-    tot_std += stdv[i];
-  }
-  tot_std /= 64;
-  Serial.println(tot_std);
+//  Serial.println();
+//  Serial.println("Mean Image: ");
+//  for(unsigned char i = 0; i < 64; i++){
+//    Serial.print(mean[i]);
+//    Serial.print(" ");
+//    if((i+1)%8==0){
+//      Serial.println();
+//    }
+//  }
+//  backgroundAvg = std::accumulate(std::begin(mean), std::end(mean), 0, std::plus<double>())/64.0;
+//  Serial.println();
+//  Serial.println("Standard Deviation: ");
+//  double tot_std = 0;
+//  for(unsigned char i = 0; i < 64; i++){
+//    tot_std += stdv[i];
+//  }
+//  tot_std /= 64;
+//  Serial.println(tot_std);
 }
 
 void loop() {
