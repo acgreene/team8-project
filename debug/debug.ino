@@ -29,128 +29,58 @@ double fill(unsigned int target[][8], GridEYE &g){
 
 
 Detector d;
+#define INTERRUPT_PIN 25
+bool interruptTable[64];
   
 void setup() {
   
   // Start Serial 
   Serial.begin(9600);
 
+  pinMode(INTERRUPT_PIN, INPUT);
+
+  d.g.setInterruptModeAbsolute();
+  d.g.setUpperInterruptValueFahrenheit(80);
+  d.g.setLowerInterruptValueFahrenheit(0);
+  d.g.setInterruptHysteresisFahrenheit(5);
+  d.g.interruptPinEnable();
+//  esp_sleep_enable_ext0_wakeup(GPIO_NUM_33,1);
+
   // Give time to set up sensor and get out of frame for init step
-  delay(2000);
+//  delay(2000);
 
   // Initialize Background
   Serial.println("About To Initialize");
 
-//  unsigned int num_frames = 30;
-//  float frames[num_frames][8][8];
-//  double frames_uint[num_frames][8][8];
-//
-//  for(int i = 0; i < num_frames; ++i){s
-//    for(byte row = 0; row < 8; ++row){
-//        for(byte col = 0; col < 8; ++col){
-//          frames[i][row][col] = d.g.getPixelTemperatureFahrenheit(row*8 + col);
-//          frames_uint[i][row][col] = (double) frames[i][row][col];
-//          Serial.print(frames[i][row][col]);
-//          Serial.print(" ");
-//          Serial.print(frames_uint[i][row][col]);
-//          Serial.print(" ");
-//        }
-//        Serial.println();
-//    }
-//    Serial.println();
-//  }
-  
-  
-  
-
-//  for(int i = 0; i < num_frames; ++i){
-//     for(int j = 0; j < 8; ++j){
-//        for(int k = 0; k < 8; ++k){
-//          d.background_temp += frames[i][j][k];
-//        }
-//     }
-//  }
-//
-//  d.background_temp /= double(num_frames*64);
-//
-//   for(int i = 0; i < num_frames; ++i){
-//     for(int j = 0; j < 8; ++j){
-//        for(int k = 0; k < 8; ++k){
-//          d.noise += pow(frames[i][j][k] - d.background_temp, 2);
-//        }
-//     }
-//  }
-//
-//  d.noise = sqrt(d.noise / double(num_frames*64));
-//
-//  d.curr_frame.update_pixels(d.g);
-//
-//  
-//  // Print Background Info
-//  Serial.print("Background Temp: ");
-//  Serial.println(d.background_temp);
-//  Serial.print("Noise: ");
-//  Serial.println(d.noise);
-//  Serial.print("Detection Thresh: ");
-//  Serial.println(d.background_temp + d.noise);
-//
-//  // Delay for Update Frame
-//  delay(1000);
+//  esp_deep_sleep_start();
 }
 
 
 void loop() {
 
-  unsigned int num_frames = 30;
-  unsigned int frames[num_frames][8][8];
-
-  for(int i = 0; i < num_frames; ++i){
-    for(int i = 0; i < num_frames; ++i){
-      double m = fill(frames[i], d.g);
-      Serial.println(m);
-      delay(100);
-    }
-    
-//    for(byte row = 0; row < 8; ++row){
-//        for(byte col = 0; col < 8; ++col){
-//          frames[i][row][col] = d.g.getPixelTemperatureFahrenheit(row*8 + col);
-//          frames_uint[i][row][col] = (double) frames[i][row][col];
-//          Serial.print(frames[i][row][col]);
-//          Serial.print(" ");
-//          Serial.print(frames_uint[i][row][col]);
-//          Serial.print(" ");
-//        }
-//        Serial.println();
-//    }
-//    Serial.println();
+  while(!d.g.interruptFlagSet()){
+    Serial.println("waiting for interrupt flag...");
+    delay(500);
   }
 
-  //update current and past frame
-//  d.update_frame();
-//
-//  double mean_hot = 0;
-//  byte num_hot = 0;
-//  double mean_cold = 0;
-//  byte num_cold = 0;
-//
-//  for(byte row = 0; row < 8; ++row){
-//    for(byte col = 0; col < 8; ++col){
-//      if(d.curr_frame.table[row][col] > d.background_temp + d.noise){
-//        mean_hot += d.curr_frame.table[row][col];
-//        ++num_hot;
-//      }
-//      else{
-//        mean_cold += d.curr_frame.table[row][col];
-//        ++num_cold;
-//      }
-//    }
-//  }
-//
-//  mean_hot /= double(num_hot);
-//  mean_cold /= double(num_cold);
-//
-//  Serial.print("Mean Class Temp Diff: ");
-//  Serial.println(mean_hot - mean_cold);
-//  
-//  delay(10);
+  // tell the user that an interrupt was fired
+  Serial.println("interrupt caught!");
+
+  // populate the interrupt flag table
+  for(int i = 0; i < 64; i++){
+    interruptTable[i] = d.g.pixelInterruptSet(i);    
+  }
+
+  // display the interrupt flag table
+    for(unsigned char i = 0; i < 64; i++){
+    Serial.print(interruptTable[i]);
+    Serial.print(" ");
+      if((i+1)%8==0){
+        Serial.println();
+      }
+    }
+
+  // clear the interrupt flag bit in the device register
+  d.g.clearInterruptFlag();
+  
 }
