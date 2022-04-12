@@ -1,6 +1,5 @@
 #include <WiFi.h>
 #include <esp_task_wdt.h>
-const int BUTTON_PIN = 0;
 
 const char *ssid = "team0008";  // TODO: Fill in with team number
 const char *password = "Team_Gr8";  // At least 8 chars
@@ -11,13 +10,10 @@ IPAddress gateway(192, 168, 11, 0);
 IPAddress subnet(255, 255, 0, 0);
 
 WiFiServer server(80);
-int32_t count = 0;
+unsigned int count = 0;
 
 void setup() {
-  Serial.begin(115200);
-
-  // Built-in button, active low
-  pinMode(BUTTON_PIN, INPUT);
+  Serial.begin(9600);
 
   // WiFi connection procedure
   WiFi.mode(WIFI_AP);
@@ -39,34 +35,19 @@ void setup() {
 void loop()
 {
   WiFiClient client = server.available();
-  if (client)
-  {
-    while (client.connected())
-    {
-      if (client.available())
-      {
+  if (client){
+    while (client.connected()){
+      if (client.available()){
         String line = client.readStringUntil('\n');
         // Prints the received line to the serial terminal
         if(line[0] == '-') --count;
         else if(line[0] == '+') ++count;
         else if(line[0] == 's') count = line.substring(1).toInt();
-        Serial.print("Updated count: ");
         Serial.println(count);
-      }
-      if (!digitalRead(BUTTON_PIN))
-      {
-        //software debouncing (if button is still pressed 100ms later, we conisder it valid)
-        delay(100);
-        if (!digitalRead(BUTTON_PIN))
-        {
-          client.print("r\n");
-          Serial.println("Client reset!");
-          delay(400);
-        }      
       }
     }
     client.stop();
   }
-  delay(10);
+  delay(1);
   esp_task_wdt_reset();
 }

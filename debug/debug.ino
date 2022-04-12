@@ -8,49 +8,36 @@
 #include "Person.h"
 #include "Detector.h"
 #include "Helpers.h"
-
-
-
-double fill(unsigned int target[][8], GridEYE &g){
-    double mean = 0;
-    double num_good_pix = 0;
-    for(byte row = 0; row < 8; ++row){
-        for(byte col = 0; col < 8; ++col){
-            target[row][col] = (unsigned int) 100*g.getPixelTemperatureFahrenheit(row*8 + col);
-            if(target[row][col] < 10000){
-              mean += target[row][col];
-              ++num_good_pix;
-            }
-        }
-    }
-    return mean / num_good_pix;
-}
-
-
+#include "Connect.h"
 
 Detector d;
 #define INTERRUPT_PIN 25
 bool interruptTable[64];
-  
+
+ESP_Client c;
+
 void setup() {
-  
-  // Start Serial 
+//   Start Serial 
   Serial.begin(9600);
-
+//
   pinMode(INTERRUPT_PIN, INPUT);
-
+//
   d.g.setInterruptModeAbsolute();
   d.g.setUpperInterruptValueFahrenheit(80);
   d.g.setLowerInterruptValueFahrenheit(0);
   d.g.setInterruptHysteresisFahrenheit(5);
   d.g.interruptPinEnable();
 //  esp_sleep_enable_ext0_wakeup(GPIO_NUM_33,1);
+  c.init();
+  Serial.println("INIT");
+  c.set_count(0);
+  Serial.println("SET 0");
 
   // Give time to set up sensor and get out of frame for init step
 //  delay(2000);
 
   // Initialize Background
-  Serial.println("About To Initialize");
+//  Serial.println("About To Initialize");
 
 //  esp_deep_sleep_start();
 }
@@ -65,6 +52,8 @@ void loop() {
 
   // tell the user that an interrupt was fired
   Serial.println("interrupt caught!");
+  c.increment_count();
+  Serial.println("INCREASED COUNT");
 
   // populate the interrupt flag table
   for(int i = 0; i < 64; i++){

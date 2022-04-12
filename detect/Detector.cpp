@@ -2,6 +2,7 @@
 #include "Person.h"
 #include "Helpers.h"
 #include "Detector.h"
+#include "ESP_Client.h"
 #include <Wire.h>
 #include <SparkFun_GridEYE_Arduino_Library.h>
 
@@ -120,9 +121,6 @@ void Detector::plot(){
 }
 
 
-  // TODO: Update velocity directions given current and past frame
-//void Detector::update_velocities();
-
 Detector::Detector(){
   // Initialize GridEYE object
   g = GridEYE();
@@ -136,9 +134,5 @@ Detector::Detector(){
   noise = 0;  
   saw_past_person = false;
 }
-  
-//Detector::~Detector(){
-//  delete curr_frame;
-//}
 
     

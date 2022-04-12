@@ -5,96 +5,118 @@
 #include <Wire.h>
 #include <SparkFun_GridEYE_Arduino_Library.h>
 
-//int Detector::init(unsigned int num_frames){
-//
-//  unsigned int frames[num_frames][8][8];
-//  
-//  for(int i = 0; i < num_frames; ++i){
-//     double m = fill(frames[i], g);
-//     if(m > 80000){
-//      return i;
-//     }
-//     delay(100);
-//  }
-//
-//  for(int i = 0; i < num_frames; ++i){
-//     for(int j = 0; j < 8; ++j){
-//        for(int k = 0; k < 8; ++k){
-//          background_temp += frames[i][j][k];
-//        }
-//     }
-//  }
-//
-//  background_temp /= double(num_frames*64);
-//
-//   for(int i = 0; i < num_frames; ++i){
-//     for(int j = 0; j < 8; ++j){
-//        for(int k = 0; k < 8; ++k){
-//          noise += pow(frames[i][j][k] - background_temp, 2);
-//        }
-//     }
-//  }
-//
-//  noise = sqrt(noise / double(num_frames*64));
-//
-//  curr_frame.update_pixels(g);
-//  return -1;
-//}
-    
+void Detector::init(unsigned int num_frames){
 
-  // Read in current frame, Assign old frame to curr frame
-//void Detector::update_frame(){
-//  saw_past_person = curr_frame.saw_person;
-//  if(saw_past_person){
-//    past_person = curr_frame.p;
-//  }
-//  curr_frame.update_pixels(g);
-//  curr_frame.saw_person = false;
-//  curr_frame.p = Person();
-//}
-
-
-  // TODO: Implement Otsu Bin or Histogram method. Don't know if this is the best implementation since we need to compute if a person is detected, then find how many people, then find where they are in separate steps. What if we could just scan the image for people and just get all three things at once??
-bool Detector::person_detected(){
-    
-    // mean temp method
-    return curr_frame.mean_temp > background_temp + noise;
-    
-}
-
-void Detector::find_person(bool plotter){
-
-  unsigned int max_temp = 0;
-  int x_max = 0;
-  int y_max = 0;
-  // figure out their position
-  for(int row = 0; row < 8; ++row){
-    for(int col = 0; col < 8; ++col){
-      if(curr_frame.table[row][col] > max_temp){
-        max_temp = curr_frame.table[row][col];
-        x_max = 7 - col;
-        y_max = row;
-      }
-    }
+  unsigned int frames[num_frames][8][8];
+  
+  for(int i = 0; i < num_frames; ++i){
+     double m = fill(frames[i], g);
+     delay(100);
   }
 
-  if(plotter){
-    for(int row = 0; row < 8; ++row){
-      for(int col = 0; col < 8; ++col){
-        if(row == int(y_max) and col == int(x_max)){
-          Serial.print(" O ");
+  double num_good_pix = 0;
+  
+  for(int i = 0; i < num_frames; ++i){
+     for(int j = 0; j < 8; ++j){
+        for(int k = 0; k < 8; ++k){
+          if(frames[i][j][k] < 10000){
+            background_temp += frames[i][j][k];
+            ++num_good_pix;
+          }
         }
-        else{
-          Serial.print(" . ");
+     }
+  }
+
+  background_temp /= num_good_pix;
+
+   for(int i = 0; i < num_frames; ++i){
+     for(int j = 0; j < 8; ++j){
+        for(int k = 0; k < 8; ++k){
+          if(frames[i][j][k] < 10000){
+            noise += pow(frames[i][j][k] - background_temp, 2);
+          }
         }
+     }
+  }
+  noise = sqrt(noise / num_good_pix);
+}
+    
+
+// Read in current frame, Assign old frame to curr frame
+void Detector::update_and_process_frame(){
+
+  // Assign current frame to past frame
+  saw_past_person = curr_frame.saw_person;
+  if(saw_past_person){
+    past_person = curr_frame.p;
+  }
+  curr_frame.saw_person = false;
+
+  double sum_hot = 0;
+  double num_hot = 0;
+  double sum_cold = 0;
+  double num_cold = 0;
+
+  byte x_max = 0;
+  byte y_max = 0;
+  unsigned int max_temp = 0;
+  
+  for(byte row = 0; row < 8; ++row){
+      for(byte col = 0; col < 8; ++col){
+          unsigned int pix_temp = (unsigned int) 100*g.getPixelTemperatureFahrenheit(row*8 + col);
+          if(pix_temp > 10000){
+            continue;
+          }
+          curr_frame.table[row][col] = pix_temp;
+
+          if(pix_temp > max_temp){
+            x_max = col;
+            y_max = row;
+            max_temp = pix_temp;
+          }
+          
+          if(pix_temp > background_temp + 2*noise){
+            sum_hot += pix_temp;
+            ++num_hot;
+          }
+          else{
+            sum_cold += pix_temp;
+            ++num_cold;
+          }
       }
-      Serial.println();
+   }
+
+   curr_frame.diff_class_temp = (sum_hot / (num_hot + .1)) - (sum_cold / (num_cold + .1));
+   curr_frame.mean_temp = (sum_hot + sum_cold) / (num_cold + num_hot);
+
+   curr_frame.p.xpos = 7 - x_max; // reverse for plot
+   curr_frame.p.ypos = y_max;
+
+}
+
+
+bool Detector::person_detected_mean(){
+    // mean temp method
+    return curr_frame.mean_temp > background_temp + noise;
+}
+
+bool Detector::person_detected_otsu(){
+    return curr_frame.diff_class_temp > 3 * noise;
+}
+
+void Detector::plot(){
+  for(int row = 0; row < 8; ++row){
+    for(int col = 0; col < 8; ++col){
+      if(row == curr_frame.p.ypos and col == curr_frame.p.xpos){
+        Serial.print(" O ");
+      }
+      else{
+        Serial.print(" . ");
+      }
     }
     Serial.println();
   }
-  curr_frame.p.xpos = x_max;
-  curr_frame.p.ypos = y_max;
-  
+  Serial.println();
 }
 
 
@@ -105,6 +127,7 @@ Detector::Detector(){
   // Initialize GridEYE object
   g = GridEYE();
   Wire.begin();
+  
   g.begin();
   g.setFramerate10FPS();
 
@@ -112,7 +135,6 @@ Detector::Detector(){
   background_temp = 0;
   noise = 0;  
   saw_past_person = false;
-  curr_frame = Frame();
 }
   
 //Detector::~Detector(){

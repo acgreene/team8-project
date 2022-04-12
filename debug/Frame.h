@@ -8,7 +8,7 @@
 
 class Frame{
 public:
-    void update_pixels(GridEYE &g);
+//    void update_pixels(GridEYE &g);
 
     void print_frame(unsigned int rate);
     

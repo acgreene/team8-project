@@ -3,7 +3,7 @@
 
 #include <SparkFun_GridEYE_Arduino_Library.h>
 
-//double fill(unsigned int target[][8], GridEYE &g);
+double fill(unsigned int target[][8], GridEYE &g);
 
 int sgn(int x);
 

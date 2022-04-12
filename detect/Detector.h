@@ -5,6 +5,7 @@
 #include "Person.h"
 #include "Helpers.h"
 #include <SparkFun_GridEYE_Arduino_Library.h>
+#include "ESP_Client.h"
 
 
 
@@ -18,21 +19,19 @@ public:
 
     bool person_detected_otsu();
 
-//    void find_person(bool plotter);
     void plot();
     
     void update_velocities();
     
     Detector();
     
-//    ~Detector();
-
     bool saw_past_person;
     unsigned int count;
     double background_temp;
     double noise;
     Person past_person;
     GridEYE g;
+    ESP_Client c;
     Frame curr_frame;
 };
 

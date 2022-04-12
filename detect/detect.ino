@@ -1,6 +1,7 @@
 
 #include <SparkFun_GridEYE_Arduino_Library.h>
 #include <Wire.h>
+#include <WiFi.h>
 #include <iostream>
 #include <numeric>
 #include <cmath>
@@ -8,7 +9,7 @@
 #include "Person.h"
 #include "Detector.h"
 #include "Helpers.h"
-
+#include "ESP_Client.h"
 
 
 INTERRUPT_PIN = 25;
@@ -18,6 +19,9 @@ void setup() {
   
   // Start Serial 
   Serial.begin(9600);
+
+  d.c.init();
+  Serial.println("Connected to Server");
 
   // Give time to set up sensor and get out of frame for init step
   delay(3000);
@@ -35,7 +39,7 @@ void setup() {
   Serial.println(d.background_temp + d.noise);
 
   // Delay for Update Frame
-  delay(1000);
+  delay(100);
 }
 
 // TODO: 
@@ -101,11 +105,13 @@ void loop() {
         Serial.println("LEAVING ROOM");
         Serial.println("Occupancy Count Decreased by 1");
         --d.count;
+        d.c.decrement_count();
       }
       else if(!d.past_person.from_inside and d.past_person.xpos < 4){
         Serial.println("ENTERING ROOM");
         Serial.println("Occupancy Count Increased by 1");
         ++d.count;
+        d.c.increment_count();
       }
       else{
         Serial.println("LEFT THE WAY THEY CAME");
