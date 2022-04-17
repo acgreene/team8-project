@@ -10,7 +10,7 @@ IPAddress gateway(192, 168, 11, 0);
 IPAddress subnet(255, 255, 0, 0);
 
 WiFiServer server(80);
-unsigned int count = 0;
+int count = 0;
 
 void setup() {
   Serial.begin(9600);

@@ -22,6 +22,7 @@ void setup() {
 
   // Connect to Wifi
   c.init();
+  Serial.println("c_init");
 
   // Give time to set up sensor and get out of frame for init step
   delay(3000);
@@ -29,11 +30,13 @@ void setup() {
   // Initialize Background
   d.init(100);
 
+  Serial.println("d_init");
   // Delay for Update Frame
   delay(100);
 
   // Start
   c.send_background(d.background_temp, d.noise);
+  Serial.println("sent background");
   c.set_count(0);
 }
 
@@ -117,5 +120,5 @@ void loop() {
     d.go_to_sleep();
   }
   // Give Time For Sensor To Supply new Frame
-  delay(10);
+//  delay(10);
 }
