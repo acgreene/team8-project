@@ -15,27 +15,23 @@ void ESP_Client::init() {
 }
 
 
-//void ESP_Client::increment_count(){
-//   WiFiClient client;
-//   while (!client.connect(serverIP, 80)) 
-//    {
-////      Serial.println("Connection to server failed");
-//      if(WiFi.status() != WL_CONNECTED)
-//      {
-////        Serial.println("Wifi Disconnected; attempting to reconnect.");
-//        WiFi.disconnect();
-//        WiFi.begin(ssid, password);
-//      }
-//      while (WiFi.status() != WL_CONNECTED) {
-////        Serial.print("Attempting to reconnect...\n");
-//        delay(500);
-//      }
-////      Serial.print("WiFi reconnection successful with IP ");
-//      delay(1000);
-//    }
-//    client.print("+");
-//    client.stop();
-//}
+void ESP_Client::increment_count(){
+   WiFiClient client;
+   while (!client.connect(serverIP, 80)) 
+    {
+      if(WiFi.status() != WL_CONNECTED)
+      {
+        WiFi.disconnect();
+        WiFi.begin(ssid, password);
+      }
+      while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+      }
+      delay(1000);
+    }
+    client.print("+");
+    client.stop();
+}
 
 void ESP_Client::decrement_count(){
   WiFiClient client;
