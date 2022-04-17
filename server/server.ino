@@ -30,6 +30,38 @@ void setup() {
   esp_task_wdt_add(NULL); //add current thread to WDT watch
   
   Serial.println("Server started\n");
+
+  // wait for background info
+  bool received_background = false;
+  bool received_noise = false;
+  unsigned int background;
+  unsigned int noise;
+  while(!received_background and !received_noise){
+    WiFiClient client = server.available();
+    if (client){
+      while (client.connected()){
+        if (client.available()){
+          String line = client.readStringUntil('\n');
+          // Prints the received line to the serial terminal
+          if(line[0] == 'b'){
+            background = line.substring(1).toInt();
+            received_background = true;
+          }
+          else if(line[0] == 'n'){
+            noise = line.substring(1).toInt();
+            received_noise = true;
+          }
+        }
+      }
+      client.stop();
+    }
+    delay(1);
+    esp_task_wdt_reset();
+  }
+  Serial.print("Background Temp: ");
+  Serial.println(background);
+  Serial.print("Noise: ");
+  Serial.println(noise);
 }
 
 void loop()

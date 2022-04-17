@@ -39,8 +39,6 @@ void setup() {
   Serial.print("Detection Thresh: ");
   Serial.println(d.background_temp + d.noise);
 
-  c.set_count(21);
-
   // Delay for Update Frame
   delay(100);
 }
@@ -66,7 +64,6 @@ void loop() {
     // wake up if sleeping
     if(d.sleeping){
       Serial.println("Waking Up");
-      c.set_count(1);
       d.wakeup();
     }
     
@@ -158,7 +155,6 @@ void loop() {
 
   if(!d.sleeping and d.num_consec_empty_frames > 5){
     Serial.println("Going to Sleep");
-    c.set_count(0);
     d.go_to_sleep();
   }
   // Give Time For Sensor To Supply new Frame

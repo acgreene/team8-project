@@ -4,6 +4,7 @@
 #include "Frame.h"
 #include "Person.h"
 #include "Helpers.h"
+#include "Detector.h"
 #include <SparkFun_GridEYE_Arduino_Library.h>
 #include <WiFi.h>
 
@@ -11,18 +12,15 @@ class ESP_Client{
 public:
 	void init();
 
-//	void send(char ctsn);
-
   void increment_count();
 
   void decrement_count();
-
-//	void receive();
 
 	void reset();
 
 	void set_count(unsigned int ct);
 
+  void send_background(double background, double noise);
 private:
   const char *ssid = "team0008";
   const char *password = "Team_Gr8";

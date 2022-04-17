@@ -33,6 +33,7 @@ void setup() {
   delay(100);
 
   // Start
+  c.send_background(d.background_temp, d.noise);
   c.set_count(0);
 }
 
